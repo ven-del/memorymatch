@@ -258,9 +258,9 @@ function createCardElement(card, index) {
         if (card.hasText) {
             // Card do café com texto "Cafézin"
             cardBack.innerHTML = `
-                <div class="community-card-content">
-                    <div class="community-text">${card.name}</div>
-                    <img src="${card.image}" alt="${card.name}" class="community-image">
+                <div class="community-card-content cafe-card">
+                    <div class="community-text cafe-text">${card.name}</div>
+                    <img src="${card.image}" alt="${card.name}" class="community-image cafe-image">
                 </div>
             `;
         } else {

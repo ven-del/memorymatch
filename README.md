@@ -25,8 +25,16 @@ O jogador deve encontrar todos os pares de cards em até 2 minutos. O jogo come�
 - Dedicação
 - Parceria
 
+### Atividades da Comunidade
+- Aulões
+- Girls (grupo feminino)
+- Podcast
+- Cafézin (com texto especial)
+
 ### Card Especial
 - Logo da Comunidade HouseJs
+
+**Total: 14 pares (28 cards) organizados em grade 7x4**
 
 ## 🎮 Como Jogar
 
@@ -34,7 +42,7 @@ O jogador deve encontrar todos os pares de cards em até 2 minutos. O jogo come�
 2. **Nome do Jogador**: Digite seu nome (máximo 20 caracteres) para começar
 3. **Fase de Memorização**: Você tem 15 segundos para memorizar a posição dos cards
 4. **Jogo**: Clique nos cards para virá-los e encontre os pares
-5. **Objetivo**: Encontre todos os 10 pares em até 2 minutos
+5. **Objetivo**: Encontre todos os 14 pares em até 2 minutos
 6. **Pontuação**: Sua pontuação é baseada no tempo restante quando completar o jogo
 
 ## 🏆 Sistema de Pontuação

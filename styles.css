@@ -153,10 +153,43 @@
     line-height: 1.2;
 }
 
+/* Estilos para cards da comunidade */
+.community-image {
+    max-width: 90%;
+    max-height: 90%;
+    object-fit: contain;
+    border-radius: 8px;
+}
+
+.community-card-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 4px;
+}
+
+.community-text {
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: #4a5568;
+    text-align: center;
+    margin-bottom: 2px;
+}
+
 /* Responsividade */
+@media (max-width: 1024px) and (min-width: 769px) {
+    #game-board {
+        grid-template-columns: repeat(6, 1fr);
+        gap: 3px;
+        max-width: 5xl;
+    }
+}
+
 @media (max-width: 768px) {
     #game-board {
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(5, 1fr);
         gap: 2px;
         padding: 8px;
     }
@@ -175,6 +208,15 @@
         padding: 4px;
     }
     
+    .community-text {
+        font-size: 0.6rem;
+    }
+    
+    .community-image {
+        max-width: 85%;
+        max-height: 85%;
+    }
+    
     /* Responsividade para logos */
     .house-logo-back {
         width: 35px;
@@ -189,6 +231,15 @@
     
     .topic-text {
         font-size: 0.6rem;
+    }
+    
+    .community-text {
+        font-size: 0.5rem;
+    }
+    
+    .community-image {
+        max-width: 80%;
+        max-height: 80%;
     }
     
     /* Logos ainda menores em telas muito pequenas */

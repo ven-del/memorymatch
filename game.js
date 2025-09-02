@@ -2,8 +2,8 @@
 const GAME_CONFIG = {
     PREPARATION_TIME: 15, // segundos para memorizar
     GAME_TIME: 120, // 2 minutos em segundos
-    TOTAL_PAIRS: 10,
-    GRID_SIZE: { cols: 5, rows: 4 }
+    TOTAL_PAIRS: 14,
+    GRID_SIZE: { cols: 7, rows: 4 }
 };
 
 // Dados dos cards
@@ -20,6 +20,12 @@ const CARD_DATA = [
     { id: 'colaboracao', type: 'topic', name: 'Colaboração', text: 'Colaboração' },
     { id: 'dedicacao', type: 'topic', name: 'Dedicação', text: 'Dedicação' },
     { id: 'parceria', type: 'topic', name: 'Parceria', text: 'Parceria' },
+    
+    // Novos cards com imagens da comunidade
+    { id: 'auloes', type: 'community', name: 'Aulões', image: 'auloes.png' },
+    { id: 'girls', type: 'community', name: 'Girls', image: 'girls.png' },
+    { id: 'podcast', type: 'community', name: 'Podcast', image: 'podcast.png' },
+    { id: 'cafe', type: 'community', name: 'Cafézin', image: 'cafe.png', hasText: true },
     
     // Par especial
     { id: 'housejs', type: 'special', name: 'HouseJs', text: 'HouseJs' }
@@ -248,6 +254,19 @@ function createCardElement(card, index) {
         cardBack.innerHTML = `<img src="${card.image}" alt="${card.name}">`;
     } else if (card.type === 'topic') {
         cardBack.innerHTML = `<div class="topic-text">${card.text}</div>`;
+    } else if (card.type === 'community') {
+        if (card.hasText) {
+            // Card do café com texto "Cafézin"
+            cardBack.innerHTML = `
+                <div class="community-card-content">
+                    <div class="community-text">${card.name}</div>
+                    <img src="${card.image}" alt="${card.name}" class="community-image">
+                </div>
+            `;
+        } else {
+            // Outros cards da comunidade apenas com imagem
+            cardBack.innerHTML = `<img src="${card.image}" alt="${card.name}" class="community-image">`;
+        }
     }
     
     cardInner.appendChild(cardFront);

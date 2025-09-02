@@ -116,13 +116,6 @@ memorymatch/
 └── README.md       # Documentação do projeto
 ```
 
-## 🎨 Paleta de Cores
-
-- **Primary**: Roxo e Azul (gradiente de fundo)
-- **Accent**: Amarelo dourado (#ffd700)
-- **Cards**: Gradientes personalizados
-- **Special Cards**: Cores temáticas específicas
-
 ## 💡 Futuras Melhorias
 
 - [ ] Diferentes níveis de dificuldade

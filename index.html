@@ -4,8 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MemoryMatch - HouseJs</title>
-    <link rel="shortcut icon" href="logo_house.png" type="image/x-icon">
+    <link rel="shortcut icon" href="logo-preta-housejs-fundo-transparente.svg" type="image/x-icon">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body class="min-h-screen">
@@ -32,7 +33,7 @@
     <div id="game-screen" class="hidden p-4">
         <!-- Header do Jogo -->
         <div class="flex justify-between items-center mb-6 bg-black/30 rounded-lg p-4">
-            <button id="back-to-menu" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded transition-all duration-300">
+            <button id="back-to-menu" class="bg-black hover:bg-gray-800 text-white font-bold py-2 px-4 rounded transition-all duration-300">
                 ← Voltar
             </button>
             <div class="text-center">
@@ -40,20 +41,20 @@
                 <div id="timer" class="text-3xl font-bold text-white">2:00</div>
             </div>
             <div class="text-white">
-                <div>Pares: <span id="pairs-found">0</span>/14</div>
+                <div>Pares: <span id="pairs-found">0</span>/10</div>
             </div>
         </div>
 
         <!-- Mensagem de Preparação -->
         <div id="preparation-message" class="text-center mb-6">
-            <div class="bg-yellow-400 text-purple-900 text-xl font-bold py-4 px-8 rounded-lg inline-block">
-                <div id="prep-text">Memorize os cards! Você tem 15 segundos...</div>
-                <div id="prep-timer" class="text-2xl font-bold mt-2">15</div>
+            <div class="bg-amber-500 text-black text-xl font-bold py-4 px-8 rounded-lg inline-block">
+                <div id="prep-text">Memorize os cards, você tem 10 segundos!</div>
+                <div id="prep-timer" class="text-2xl font-bold mt-2">10</div>
             </div>
         </div>
 
         <!-- Grade de Cards -->
-        <div id="game-board" class="grid grid-cols-7 gap-4 max-w-6xl mx-auto">
+        <div id="game-board" class="grid grid-cols-5 gap-4 max-w-5xl mx-auto">
             <!-- Os cards serão gerados pelo JavaScript -->
         </div>
     </div>
@@ -65,7 +66,7 @@
             <div id="scoreboard-list" class="space-y-3">
                 <!-- Lista de pontuações será gerada pelo JavaScript -->
             </div>
-            <button id="back-to-menu-from-scoreboard" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg mt-6 transition-all duration-300">
+            <button id="back-to-menu-from-scoreboard" class="w-full bg-black hover:bg-gray-800 text-white font-bold py-3 px-6 rounded-lg mt-6 transition-all duration-300">
                 Voltar ao Menu
             </button>
         </div>
@@ -74,19 +75,19 @@
     <!-- Modal de Nome do Jogador -->
     <div id="player-name-modal" class="hidden fixed inset-0 bg-black/75 flex items-center justify-center z-50">
         <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4 text-center">
-            <h3 class="text-2xl font-bold mb-4 text-purple-900">Bem-vindo ao MemoryMatch!</h3>
-            <p class="text-lg mb-6 text-gray-700">Digite seu nome para começar:</p>
+            <h3 class="text-2xl font-bold mb-4 text-black">Bem-vindo ao Memory<span class="text-amber-500">Match!</span></h3>
+            <p class="text-lg mb-6 text-black">Digite seu nome para começar:</p>
             <div class="mb-6">
                 <input id="player-name-input" type="text" placeholder="Seu nome aqui..." 
-                       class="w-full px-4 py-3 border-2 border-purple-300 rounded-lg text-lg text-center focus:border-purple-500 focus:outline-none"
+                       class="w-full px-4 py-3 border-2 border-amber-300 rounded-lg text-lg text-center focus:border-amber-500 focus:outline-none"
                        maxlength="20">
-                <p class="text-sm text-gray-500 mt-2">Máximo 20 caracteres</p>
+                <p class="text-sm text-black mt-2">Máximo 20 caracteres</p>
             </div>
             <div class="space-y-3">
-                <button id="start-game-with-name" class="w-full bg-yellow-400 hover:bg-yellow-500 text-purple-900 font-bold py-3 px-6 rounded-lg transition-all duration-300 disabled:bg-gray-300 disabled:cursor-not-allowed">
+                <button id="start-game-with-name" class="w-full bg-amber-500 hover:bg-amber-600 text-black font-bold py-3 px-6 rounded-lg transition-all duration-300 disabled:bg-gray-300 disabled:cursor-not-allowed">
                     Começar Jogo
                 </button>
-                <button id="cancel-player-name" class="w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg transition-all duration-300">
+                <button id="cancel-player-name" class="w-full bg-black hover:bg-gray-800 text-white font-bold py-3 px-6 rounded-lg transition-all duration-300">
                     Cancelar
                 </button>
             </div>
@@ -99,10 +100,10 @@
             <h3 id="game-result-title" class="text-2xl font-bold mb-4"></h3>
             <p id="game-result-message" class="text-lg mb-6"></p>
             <div class="space-y-3">
-                <button id="play-again" class="w-full bg-yellow-400 hover:bg-yellow-500 text-purple-900 font-bold py-3 px-6 rounded-lg transition-all duration-300">
+                <button id="play-again" class="w-full bg-amber-500 hover:bg-amber-600 text-black font-bold py-3 px-6 rounded-lg transition-all duration-300">
                     Jogar Novamente
                 </button>
-                <button id="back-to-menu-from-modal" class="w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg transition-all duration-300">
+                <button id="back-to-menu-from-modal" class="w-full bg-black hover:bg-gray-800 text-white font-bold py-3 px-6 rounded-lg transition-all duration-300">
                     Voltar ao Menu
                 </button>
             </div>

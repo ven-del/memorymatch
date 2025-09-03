@@ -1,9 +1,16 @@
+// Configuração do Supabase
+const SUPABASE_URL = 'https://tyofmihrgadjwwlylqgj.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR5b2ZtaWhyZ2Fkand3bHlscWdqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkxMzI1NzUsImV4cCI6MjA2NDcwODU3NX0.O9z2TDt7TFJiaXgzC9ZHtnHc7-iQ0qJDsEwgUFae1Mw';
+
+// Inicializa o cliente Supabase
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 // Configuração do jogo
 const GAME_CONFIG = {
-    PREPARATION_TIME: 15, // segundos para memorizar
+    PREPARATION_TIME: 10, // segundos para memorizar
     GAME_TIME: 120, // 2 minutos em segundos
-    TOTAL_PAIRS: 14,
-    GRID_SIZE: { cols: 7, rows: 4 }
+    TOTAL_PAIRS: 10,
+    GRID_SIZE: { cols: 5, rows: 4 }
 };
 
 // Dados dos cards
@@ -14,12 +21,6 @@ const CARD_DATA = [
     { id: 'html', type: 'tech', name: 'HTML', image: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/html5/html5-original.svg' },
     { id: 'css', type: 'tech', name: 'CSS', image: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/css3/css3-original.svg' },
     { id: 'java', type: 'tech', name: 'Java', image: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg', special: true },
-    
-    // Tópicos
-    { id: 'acolhimento', type: 'topic', name: 'Acolhimento', text: 'Acolhimento' },
-    { id: 'colaboracao', type: 'topic', name: 'Colaboração', text: 'Colaboração' },
-    { id: 'dedicacao', type: 'topic', name: 'Dedicação', text: 'Dedicação' },
-    { id: 'parceria', type: 'topic', name: 'Parceria', text: 'Parceria' },
     
     // Novos cards com imagens da comunidade
     { id: 'auloes', type: 'community', name: 'Aulões', image: 'auloes.png' },
@@ -67,6 +68,7 @@ const elements = {
 // Inicialização
 document.addEventListener('DOMContentLoaded', function() {
     initializeEventListeners();
+    // Pré-carrega o placar do Supabase para cache
     loadScoreboard();
 });
 
@@ -232,7 +234,7 @@ function createCardElement(card, index) {
     // Frente do card (costas)
     const cardFront = document.createElement('div');
     cardFront.className = 'card-front';
-    cardFront.innerHTML = '<img src="logo_house.png" alt="HouseJs Logo" class="house-logo-back">';
+    cardFront.innerHTML = '<img src="logo-preta-housejs-fundo-transparente.svg" alt="HouseJs Logo" class="house-logo-back bg-black">';
     
     // Verso do card (conteúdo)
     const cardBack = document.createElement('div');
@@ -252,8 +254,6 @@ function createCardElement(card, index) {
         `;
     } else if (card.type === 'tech') {
         cardBack.innerHTML = `<img src="${card.image}" alt="${card.name}">`;
-    } else if (card.type === 'topic') {
-        cardBack.innerHTML = `<div class="topic-text">${card.text}</div>`;
     } else if (card.type === 'community') {
         if (card.hasText) {
             // Card do café com texto "Cafézin"
@@ -406,8 +406,7 @@ function endGame(won) {
     
     if (won) {
         const score = gameState.timeRemaining;
-        const position = saveScore(score);
-        showGameOverModal(true, score, position);
+        saveScoreToSupabase(score);
     } else {
         showGameOverModal(false, 0, 0);
     }
@@ -416,14 +415,22 @@ function endGame(won) {
 function showGameOverModal(won, score, position) {
     if (won) {
         elements.gameResultTitle.textContent = '🎉 Parabéns!';
-        elements.gameResultTitle.className = 'text-2xl font-bold mb-4 text-green-600';
-        elements.gameResultMessage.innerHTML = `
-            Você completou o jogo com <strong>${score} segundos</strong> restantes!<br>
-            <span class="text-lg">Sua colocação: <strong>${position}º lugar</strong></span>
-        `;
+        elements.gameResultTitle.className = 'text-2xl font-bold mb-4 text-amber-500';
+        
+        if (position) {
+            elements.gameResultMessage.innerHTML = `
+                Você completou o jogo com <strong>${score} segundos</strong> restantes!<br>
+                <span class="text-lg text-black">Sua colocação: <strong class="text-amber-500">${position}º lugar</strong></span>
+            `;
+        } else {
+            elements.gameResultMessage.innerHTML = `
+                Você completou o jogo com <strong>${score} segundos</strong> restantes!<br>
+                <span class="text-sm text-gray-600">Salvando pontuação...</span>
+            `;
+        }
     } else {
         elements.gameResultTitle.textContent = '⏰ Tempo Esgotado!';
-        elements.gameResultTitle.className = 'text-2xl font-bold mb-4 text-red-600';
+        elements.gameResultTitle.className = 'text-2xl font-bold mb-4 text-black';
         elements.gameResultMessage.textContent = 'Que pena! O tempo acabou. Tente novamente!';
     }
     
@@ -434,7 +441,89 @@ function hideGameOverModal() {
     elements.gameOverModal.classList.add('hidden');
 }
 
-function saveScore(score) {
+async function saveScoreToSupabase(score) {
+    // Mostra o modal imediatamente sem a posição
+    showGameOverModal(true, score, null);
+    
+    try {
+        // Formata o tempo como string "m:ss"
+        const minutes = Math.floor(score / 60);
+        const seconds = score % 60;
+        const timeString = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        
+        // Adiciona a nova pontuação no Supabase
+        const { data, error } = await supabase
+            .from('placar')
+            .insert([
+                {
+                    nome: gameState.playerName,
+                    tempo_restante: timeString
+                }
+            ])
+            .select();
+
+        if (error) {
+            console.error('Erro ao salvar pontuação:', error);
+            // Em caso de erro, usar localStorage como fallback
+            const position = saveScoreToLocalStorage(score);
+            showGameOverModal(true, score, position);
+            return;
+        }
+
+        // Busca a posição do jogador no ranking
+        const position = await getPlayerPosition(score);
+        
+        // Atualiza o modal com a posição
+        showGameOverModal(true, score, position);
+
+    } catch (error) {
+        console.error('Erro de conexão:', error);
+        // Em caso de erro, usar localStorage como fallback
+        const position = saveScoreToLocalStorage(score);
+        showGameOverModal(true, score, position);
+    }
+}
+
+async function getPlayerPosition(score) {
+    try {
+        const { data, error } = await supabase
+            .from('placar')
+            .select('tempo_restante')
+            .order('created_at', { ascending: true }); // Busca todos os registros
+
+        if (error) {
+            console.error('Erro ao buscar posição:', error);
+            return 1;
+        }
+
+        // Converte strings de tempo para segundos para ordenação
+        const scoresWithSeconds = data.map(item => {
+            const timeParts = item.tempo_restante.split(':');
+            const totalSeconds = parseInt(timeParts[0]) * 60 + parseInt(timeParts[1]);
+            return totalSeconds;
+        });
+
+        // Ordena do maior para o menor
+        scoresWithSeconds.sort((a, b) => b - a);
+
+        // Encontra a posição baseada na pontuação
+        let position = 1;
+        for (let i = 0; i < scoresWithSeconds.length; i++) {
+            if (scoresWithSeconds[i] > score) {
+                position++;
+            } else {
+                break;
+            }
+        }
+
+        return position;
+    } catch (error) {
+        console.error('Erro ao calcular posição:', error);
+        return 1;
+    }
+}
+
+function saveScoreToLocalStorage(score) {
     let scoreboard = getStoredScoreboard();
     
     // Adiciona a nova pontuação
@@ -469,18 +558,72 @@ function getStoredScoreboard() {
 
 function showScoreboard() {
     showScreen('scoreboard');
+    
+    // Mostra indicador de carregamento
+    elements.scoreboardList.innerHTML = `
+        <div class="text-center text-black py-8">
+            <div class="animate-pulse">Carregando placar...</div>
+        </div>
+    `;
+    
     loadScoreboard();
 }
 
-function loadScoreboard() {
+async function loadScoreboard() {
+    try {
+        const { data, error } = await supabase
+            .from('placar')
+            .select('*')
+            .order('created_at', { ascending: true }); // Busca todos os dados
+
+        if (error) {
+            console.error('Erro ao carregar placar:', error);
+            // Em caso de erro, usar localStorage como fallback
+            loadScoreboardFromLocalStorage();
+            return;
+        }
+
+        // Converte e ordena os dados do maior tempo para o menor
+        const sortedData = data
+            .map(item => {
+                // Converte tempo string para segundos para ordenação
+                const timeParts = item.tempo_restante.split(':');
+                const totalSeconds = parseInt(timeParts[0]) * 60 + parseInt(timeParts[1]);
+                return {
+                    ...item,
+                    totalSeconds
+                };
+            })
+            .sort((a, b) => b.totalSeconds - a.totalSeconds) // Ordena do maior para o menor
+            .slice(0, 10); // Pega apenas os top 10
+
+        displayScoreboard(sortedData);
+
+    } catch (error) {
+        console.error('Erro de conexão:', error);
+        // Em caso de erro, usar localStorage como fallback
+        loadScoreboardFromLocalStorage();
+    }
+}
+
+function loadScoreboardFromLocalStorage() {
     const scoreboard = getStoredScoreboard();
+    const formattedData = scoreboard.map(score => ({
+        nome: score.name,
+        pontuacao: score.score,
+        data_jogo: `${score.date} ${score.time}`
+    }));
+    displayScoreboard(formattedData);
+}
+
+function displayScoreboard(scoreboard) {
     elements.scoreboardList.innerHTML = '';
     
     if (scoreboard.length === 0) {
         elements.scoreboardList.innerHTML = `
-            <div class="text-center text-gray-400 py-8">
+            <div class="text-center text-black py-8">
                 <p>Nenhuma pontuação registrada ainda.</p>
-                <p>Seja o primeiro a jogar!</p>
+                <p class="text-amber-500 font-bold">Seja o primeiro a jogar!</p>
             </div>
         `;
         return;
@@ -489,25 +632,48 @@ function loadScoreboard() {
     scoreboard.forEach((score, index) => {
         const scoreElement = document.createElement('div');
         scoreElement.className = `flex justify-between items-center p-3 rounded ${
-            index === 0 ? 'bg-yellow-500 text-black' : 
-            index === 1 ? 'bg-gray-300 text-black' : 
-            index === 2 ? 'bg-orange-400 text-black' : 
-            'bg-gray-700 text-white'
+            index === 0 ? 'bg-amber-500 text-black' : 
+            index === 1 ? 'bg-amber-300 text-black' : 
+            index === 2 ? 'bg-amber-200 text-black' : 
+            'bg-gray-100 text-black'
         }`;
         
         const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}º`;
+        
+        // Usa o tempo_restante se existir (dados do Supabase) ou formata pontuacao (localStorage)
+        let displayTime = '';
+        if (score.tempo_restante) {
+            displayTime = score.tempo_restante;
+        } else if (score.pontuacao !== undefined) {
+            // Para dados do localStorage (fallback)
+            const minutes = Math.floor(score.pontuacao / 60);
+            const seconds = score.pontuacao % 60;
+            displayTime = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+        
+        // Formata a data se existir
+        let displayDate = '';
+        if (score.created_at) {
+            try {
+                const date = new Date(score.created_at);
+                displayDate = date.toLocaleDateString('pt-BR');
+            } catch (e) {
+                displayDate = '';
+            }
+        } else if (score.date) {
+            displayDate = score.date;
+        }
         
         scoreElement.innerHTML = `
             <div class="flex items-center gap-2">
                 <span class="font-bold">${medal}</span>
                 <div class="flex flex-col">
-                    <span class="font-semibold">${score.name || 'Jogador Anônimo'}</span>
-                    <span class="text-sm opacity-75">${score.score}s restantes</span>
+                    <span class="font-semibold">${score.nome || score.name || 'Jogador Anônimo'}</span>
+                    <span class="text-sm opacity-75">${displayTime} restantes</span>
                 </div>
             </div>
             <div class="text-sm opacity-75 text-right">
-                <div>${score.date}</div>
-                <div>${score.time}</div>
+                ${displayDate ? `<div>${displayDate}</div>` : ''}
             </div>
         `;
         

@@ -60,13 +60,15 @@
     </div>
 
     <!-- Tela do Placar -->
-    <div id="scoreboard-screen" class="hidden flex flex-col items-center justify-center min-h-screen p-8">
-        <div class="bg-black/50 rounded-lg p-8 max-w-md w-full">
-            <h2 class="text-3xl font-bold text-yellow-400 text-center mb-6">Placar</h2>
-            <div id="scoreboard-list" class="space-y-3">
-                <!-- Lista de pontuações será gerada pelo JavaScript -->
+    <div id="scoreboard-screen" class="hidden flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 to-zinc-100 p-8">
+        <div class="bg-white/95 backdrop-blur-sm rounded-lg p-8 max-w-4xl w-full shadow-xl">
+            <h2 class="text-3xl font-bold text-amber-600 text-center mb-6">Placar</h2>
+            <div id="scoreboard-container" class="max-h-96 overflow-y-auto bg-amber-50/50 rounded-lg p-4">
+                <div id="scoreboard-list" class="space-y-3">
+                    <!-- Lista de pontuações será gerada pelo JavaScript -->
+                </div>
             </div>
-            <button id="back-to-menu-from-scoreboard" class="w-full bg-black hover:bg-gray-800 text-white font-bold py-3 px-6 rounded-lg mt-6 transition-all duration-300">
+            <button id="back-to-menu-from-scoreboard" class="w-full bg-sky-600 hover:bg-sky-700 text-white font-bold py-3 px-6 rounded-lg mt-6 transition-all duration-300">
                 Voltar ao Menu
             </button>
         </div>
@@ -76,12 +78,20 @@
     <div id="player-name-modal" class="hidden fixed inset-0 bg-black/75 flex items-center justify-center z-50">
         <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4 text-center">
             <h3 class="text-2xl font-bold mb-4 text-black">Bem-vindo ao Memory<span class="text-amber-500">Match!</span></h3>
-            <p class="text-lg mb-6 text-black">Digite seu nome para começar:</p>
-            <div class="mb-6">
-                <input id="player-name-input" type="text" placeholder="Seu nome aqui..." 
-                       class="w-full px-4 py-3 border-2 border-amber-300 rounded-lg text-lg text-center focus:border-amber-500 focus:outline-none"
-                       maxlength="20">
-                <p class="text-sm text-black mt-2">Máximo 20 caracteres</p>
+            <p class="text-lg mb-6 text-black">Digite seus dados para começar:</p>
+            <div class="mb-6 space-y-4">
+                <div>
+                    <input id="player-name-input" type="text" placeholder="Seu nome aqui..." 
+                           class="w-full px-4 py-3 border-2 border-amber-300 rounded-lg text-lg text-center focus:border-amber-500 focus:outline-none"
+                           maxlength="20">
+                    <p class="text-sm text-black mt-1">Máximo 20 caracteres</p>
+                </div>
+                <div>
+                    <input id="player-phone-input" type="tel" placeholder="Telefone: (XX) XXXXX-XXXX" 
+                           class="w-full px-4 py-3 border-2 border-amber-300 rounded-lg text-lg text-center focus:border-amber-500 focus:outline-none"
+                           maxlength="15">
+                    <p class="text-sm text-black mt-1">Formato: (XX) XXXXX-XXXX</p>
+                </div>
             </div>
             <div class="space-y-3">
                 <button id="start-game-with-name" class="w-full bg-amber-500 hover:bg-amber-600 text-black font-bold py-3 px-6 rounded-lg transition-all duration-300 disabled:bg-gray-300 disabled:cursor-not-allowed">

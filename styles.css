@@ -330,3 +330,27 @@
         transform: scale(1);
     }
 }
+
+/* Estilos para o placar */
+#scoreboard-container {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(245, 158, 11, 0.6) rgba(245, 158, 11, 0.1);
+}
+
+#scoreboard-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+#scoreboard-container::-webkit-scrollbar-track {
+    background: rgba(245, 158, 11, 0.1);
+    border-radius: 4px;
+}
+
+#scoreboard-container::-webkit-scrollbar-thumb {
+    background: rgba(245, 158, 11, 0.6);
+    border-radius: 4px;
+}
+
+#scoreboard-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(245, 158, 11, 0.8);
+}

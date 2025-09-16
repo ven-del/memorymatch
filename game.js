@@ -43,7 +43,8 @@ let gameState = {
     timeRemaining: GAME_CONFIG.GAME_TIME,
     gameStarted: false,
     canFlip: false,
-    playerName: ''
+    playerName: '',
+    playerPhone: ''
 };
 
 // Elementos DOM
@@ -62,15 +63,54 @@ const elements = {
     scoreboardList: document.getElementById('scoreboard-list'),
     gameResultTitle: document.getElementById('game-result-title'),
     gameResultMessage: document.getElementById('game-result-message'),
-    playerNameInput: document.getElementById('player-name-input')
+    playerNameInput: document.getElementById('player-name-input'),
+    playerPhoneInput: document.getElementById('player-phone-input')
 };
 
 // Inicialização
 document.addEventListener('DOMContentLoaded', function() {
     initializeEventListeners();
+    
+    // Testa a conexão com o Supabase
+    testSupabaseConnection();
+    
     // Pré-carrega o placar do Supabase para cache
     loadScoreboard();
 });
+
+// Função para testar a conexão com o Supabase
+async function testSupabaseConnection() {
+    try {
+        // Teste 1: Verificar se a tabela existe
+        const { data: tableData, error: tableError } = await supabase
+            .from('placar')
+            .select('*')
+            .limit(1);
+            
+        if (tableError) {
+            // Em caso de erro, pode ser tratado silenciosamente ou com notificação ao usuário
+        }
+        
+        // Teste 2: Inserção de teste usando a estrutura correta
+        const testData = {
+            nome: 'Teste Conexão',
+            telefone: '11999999999',
+            tempo_restante: '1:30'
+        };
+        
+        const { data: insertData, error: insertError } = await supabase
+            .from('placar')
+            .insert([testData])
+            .select();
+            
+        if (insertError) {
+            // Em caso de erro, pode ser tratado silenciosamente ou com notificação ao usuário
+        }
+            
+    } catch (error) {
+        // Em caso de erro crítico, pode ser tratado silenciosamente ou com notificação ao usuário
+    }
+}
 
 function initializeEventListeners() {
     // Botões do menu principal
@@ -82,6 +122,8 @@ function initializeEventListeners() {
     document.getElementById('cancel-player-name').addEventListener('click', hidePlayerNameModal);
     document.getElementById('player-name-input').addEventListener('keypress', handleNameInputKeypress);
     document.getElementById('player-name-input').addEventListener('input', validateNameInput);
+    document.getElementById('player-phone-input').addEventListener('input', handlePhoneInput);
+    document.getElementById('player-phone-input').addEventListener('keypress', handleNameInputKeypress);
     
     // Botões de voltar
     document.getElementById('back-to-menu').addEventListener('click', () => showScreen('menu'));
@@ -123,6 +165,7 @@ function showScreen(screen) {
 
 function showPlayerNameModal() {
     elements.playerNameInput.value = '';
+    elements.playerPhoneInput.value = '';
     elements.playerNameModal.classList.remove('hidden');
     setTimeout(() => elements.playerNameInput.focus(), 100);
     validateNameInput(); // Atualiza o estado do botão
@@ -130,6 +173,31 @@ function showPlayerNameModal() {
 
 function hidePlayerNameModal() {
     elements.playerNameModal.classList.add('hidden');
+}
+
+// Função para aplicar máscara de telefone
+function handlePhoneInput(event) {
+    let value = event.target.value;
+    
+    // Remove tudo que não é número
+    value = value.replace(/\D/g, '');
+    
+    // Aplica a máscara (XX) XXXXX-XXXX
+    if (value.length <= 11) {
+        if (value.length >= 6) {
+            value = value.replace(/(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3');
+        } else if (value.length >= 2) {
+            value = value.replace(/(\d{2})(\d{0,5})/, '($1) $2');
+        }
+    }
+    
+    event.target.value = value;
+    validateNameInput();
+}
+
+// Função para extrair apenas os números do telefone
+function getCleanPhone(phoneValue) {
+    return phoneValue.replace(/\D/g, '');
 }
 
 function handleNameInputKeypress(event) {
@@ -141,8 +209,10 @@ function handleNameInputKeypress(event) {
 
 function validateNameInput() {
     const name = elements.playerNameInput.value.trim();
+    const phone = getCleanPhone(elements.playerPhoneInput.value);
     const startButton = document.getElementById('start-game-with-name');
     
+    // Permite jogar apenas com nome (telefone opcional para debugging)
     if (name.length > 0) {
         startButton.disabled = false;
         startButton.classList.remove('disabled:bg-gray-300', 'disabled:cursor-not-allowed');
@@ -154,13 +224,16 @@ function validateNameInput() {
 
 function handleStartGameWithName() {
     const name = elements.playerNameInput.value.trim();
+    const phone = getCleanPhone(elements.playerPhoneInput.value);
     
     if (name.length === 0) {
         elements.playerNameInput.focus();
         return;
     }
     
+    // Telefone é opcional para testes
     gameState.playerName = name;
+    gameState.playerPhone = phone || 'não informado';
     hidePlayerNameModal();
     startGame();
 }
@@ -405,8 +478,9 @@ function endGame(won) {
     elements.timer.classList.remove('timer-warning');
     
     if (won) {
-        const score = gameState.timeRemaining;
-        saveScoreToSupabase(score);
+        // Calcula o tempo de conclusão (diferença entre 2 minutos e tempo restante)
+        const completionTime = GAME_CONFIG.GAME_TIME - gameState.timeRemaining;
+        saveScoreToSupabase(completionTime);
     } else {
         showGameOverModal(false, 0, 0);
     }
@@ -417,15 +491,20 @@ function showGameOverModal(won, score, position) {
         elements.gameResultTitle.textContent = '🎉 Parabéns!';
         elements.gameResultTitle.className = 'text-2xl font-bold mb-4 text-amber-500';
         
+        // Formata o tempo de conclusão
+        const minutes = Math.floor(score / 60);
+        const seconds = score % 60;
+        const timeString = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        
         if (position) {
             elements.gameResultMessage.innerHTML = `
-                Você completou o jogo com <strong>${score} segundos</strong> restantes!<br>
+                Você completou o jogo em <strong>${timeString}</strong>!<br>
                 <span class="text-lg text-black">Sua colocação: <strong class="text-amber-500">${position}º lugar</strong></span>
             `;
         } else {
             elements.gameResultMessage.innerHTML = `
-                Você completou o jogo com <strong>${score} segundos</strong> restantes!<br>
-                <span class="text-sm text-gray-600">Salvando pontuação...</span>
+                Você completou o jogo em <strong>${timeString}</strong>!<br>
+                <span class="text-sm text-amber-600">Salvando pontuação...</span>
             `;
         }
     } else {
@@ -446,24 +525,24 @@ async function saveScoreToSupabase(score) {
     showGameOverModal(true, score, null);
     
     try {
-        // Formata o tempo como string "m:ss"
+        // Formata o tempo de conclusão como string "m:ss"
         const minutes = Math.floor(score / 60);
         const seconds = score % 60;
         const timeString = `${minutes}:${seconds.toString().padStart(2, '0')}`;
         
-        // Adiciona a nova pontuação no Supabase
+        // Adiciona a nova pontuação no Supabase usando tempo_restante
         const { data, error } = await supabase
             .from('placar')
             .insert([
                 {
                     nome: gameState.playerName,
+                    telefone: gameState.playerPhone,
                     tempo_restante: timeString
                 }
             ])
             .select();
 
         if (error) {
-            console.error('Erro ao salvar pontuação:', error);
             // Em caso de erro, usar localStorage como fallback
             const position = saveScoreToLocalStorage(score);
             showGameOverModal(true, score, position);
@@ -477,39 +556,54 @@ async function saveScoreToSupabase(score) {
         showGameOverModal(true, score, position);
 
     } catch (error) {
-        console.error('Erro de conexão:', error);
         // Em caso de erro, usar localStorage como fallback
         const position = saveScoreToLocalStorage(score);
         showGameOverModal(true, score, position);
     }
 }
 
+// Função para formatar telefone para exibição
+function formatPhoneForDisplay(phone) {
+    if (phone.length === 11) {
+        return phone.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+    } else if (phone.length === 10) {
+        return phone.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+    }
+    return phone;
+}
+
 async function getPlayerPosition(score) {
     try {
         const { data, error } = await supabase
             .from('placar')
-            .select('tempo_restante')
+            .select('*')
             .order('created_at', { ascending: true }); // Busca todos os registros
 
         if (error) {
-            console.error('Erro ao buscar posição:', error);
             return 1;
         }
 
         // Converte strings de tempo para segundos para ordenação
         const scoresWithSeconds = data.map(item => {
-            const timeParts = item.tempo_restante.split(':');
+            // Usa tempo_restante (coluna correta da tabela)
+            const timeField = item.tempo_restante;
+            if (!timeField) {
+                return 0;
+            }
+            
+            const timeParts = timeField.split(':');
             const totalSeconds = parseInt(timeParts[0]) * 60 + parseInt(timeParts[1]);
             return totalSeconds;
-        });
+        }).filter(seconds => seconds > 0); // Remove itens inválidos
 
-        // Ordena do maior para o menor
-        scoresWithSeconds.sort((a, b) => b - a);
+        // Para tempo_restante: ordena do maior para o menor (mais tempo restante = melhor)
+        // Mas como estamos salvando tempo de conclusão, vamos inverter a lógica
+        scoresWithSeconds.sort((a, b) => a - b); // Menor tempo = melhor
 
         // Encontra a posição baseada na pontuação
         let position = 1;
         for (let i = 0; i < scoresWithSeconds.length; i++) {
-            if (scoresWithSeconds[i] > score) {
+            if (scoresWithSeconds[i] < score) {
                 position++;
             } else {
                 break;
@@ -518,7 +612,6 @@ async function getPlayerPosition(score) {
 
         return position;
     } catch (error) {
-        console.error('Erro ao calcular posição:', error);
         return 1;
     }
 }
@@ -577,30 +670,41 @@ async function loadScoreboard() {
             .order('created_at', { ascending: true }); // Busca todos os dados
 
         if (error) {
-            console.error('Erro ao carregar placar:', error);
             // Em caso de erro, usar localStorage como fallback
             loadScoreboardFromLocalStorage();
             return;
         }
 
-        // Converte e ordena os dados do maior tempo para o menor
+        if (!data || data.length === 0) {
+            displayScoreboard([]);
+            return;
+        }
+
+        // Converte e ordena os dados usando tempo_restante
         const sortedData = data
             .map(item => {
+                // Usa tempo_restante (coluna correta da tabela)
+                const timeField = item.tempo_restante;
+                
+                if (!timeField) {
+                    return null;
+                }
+                
                 // Converte tempo string para segundos para ordenação
-                const timeParts = item.tempo_restante.split(':');
+                const timeParts = timeField.split(':');
                 const totalSeconds = parseInt(timeParts[0]) * 60 + parseInt(timeParts[1]);
                 return {
                     ...item,
                     totalSeconds
                 };
             })
-            .sort((a, b) => b.totalSeconds - a.totalSeconds) // Ordena do maior para o menor
+            .filter(item => item !== null) // Remove itens inválidos
+            .sort((a, b) => a.totalSeconds - b.totalSeconds) // Ordena do menor para o maior tempo
             .slice(0, 10); // Pega apenas os top 10
 
         displayScoreboard(sortedData);
 
     } catch (error) {
-        console.error('Erro de conexão:', error);
         // Em caso de erro, usar localStorage como fallback
         loadScoreboardFromLocalStorage();
     }
@@ -631,16 +735,16 @@ function displayScoreboard(scoreboard) {
     
     scoreboard.forEach((score, index) => {
         const scoreElement = document.createElement('div');
-        scoreElement.className = `flex justify-between items-center p-3 rounded ${
+        scoreElement.className = `p-3 rounded ${
             index === 0 ? 'bg-amber-500 text-black' : 
             index === 1 ? 'bg-amber-300 text-black' : 
             index === 2 ? 'bg-amber-200 text-black' : 
-            'bg-gray-100 text-black'
+            'bg-amber-100 text-black'
         }`;
         
         const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}º`;
         
-        // Usa o tempo_restante se existir (dados do Supabase) ou formata pontuacao (localStorage)
+        // Usa tempo_restante (coluna correta) ou fallback para localStorage
         let displayTime = '';
         if (score.tempo_restante) {
             displayTime = score.tempo_restante;
@@ -649,6 +753,16 @@ function displayScoreboard(scoreboard) {
             const minutes = Math.floor(score.pontuacao / 60);
             const seconds = score.pontuacao % 60;
             displayTime = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        } else {
+            displayTime = 'N/A';
+        }
+        
+        // Formata o telefone
+        let displayPhone = '';
+        if (score.telefone) {
+            displayPhone = formatPhoneForDisplay(score.telefone);
+        } else {
+            displayPhone = 'Não informado';
         }
         
         // Formata a data se existir
@@ -665,15 +779,19 @@ function displayScoreboard(scoreboard) {
         }
         
         scoreElement.innerHTML = `
-            <div class="flex items-center gap-2">
-                <span class="font-bold">${medal}</span>
-                <div class="flex flex-col">
-                    <span class="font-semibold">${score.nome || score.name || 'Jogador Anônimo'}</span>
-                    <span class="text-sm opacity-75">${displayTime} restantes</span>
+            <div class="grid grid-cols-12 gap-2 items-center">
+                <div class="col-span-1 font-bold text-center">${medal}</div>
+                <div class="col-span-4">
+                    <div class="font-semibold">${score.nome || score.name || 'Jogador Anônimo'}</div>
+                    <div class="text-xs opacity-75">${displayPhone}</div>
                 </div>
-            </div>
-            <div class="text-sm opacity-75 text-right">
-                ${displayDate ? `<div>${displayDate}</div>` : ''}
+                <div class="col-span-3 text-center">
+                    <div class="font-semibold">${displayTime}</div>
+                    <div class="text-xs opacity-75">Conclusão</div>
+                </div>
+                <div class="col-span-4 text-right">
+                    <div class="text-sm opacity-75">${displayDate}</div>
+                </div>
             </div>
         `;
         
